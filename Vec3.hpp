@@ -18,6 +18,14 @@ class Vec3 {
 
   Vec3 operator*(double d) const { return Vec3(d * x, d * y, d * z); }
 
+  Vec3 operator/(double d) const { return Vec3(x / d, y / d, z / d); }
+
+  void operator+=(const Vec3 &other) {
+    x += other.x;
+    y += other.y;
+    z += other.z;
+  }
+
   double dot(const Vec3 &other) const {
     return x * other.x + y * other.y + z * other.z;
   }

@@ -2,9 +2,13 @@
 #include "Vec3.hpp"
 class Sphere {
  public:
+  Sphere() {}
   Sphere(Vec3 _loc, double _rad, Vec3 _color)
       : rad(_rad), loc(_loc), color(_color) {}
 
+  /**
+   * Return distance to the hit point, -1.0 if not hit
+   */
   double hit(const Ray& r) {
     Vec3 ol = r.orig - loc;
     double a = r.dir.dot(r.dir);
