@@ -1,3 +1,4 @@
+#pragma once
 #include "Ray.hpp"
 #include "Vec3.hpp"
 class Sphere {

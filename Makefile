@@ -11,5 +11,8 @@ smallpt: raytracing.cpp
 	$(CPP) $(CPPFLAGS) -o raytracing raytracing.cpp 
 
 clean:
-	-rm raytracing result.ppm 
-
+	-rm raytracing result.* 
+ppm:
+	-./raytracing && display result.ppm
+png:
+	-./raytracing && convert result.ppm result.png && display result.png

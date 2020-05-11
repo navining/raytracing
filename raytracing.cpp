@@ -19,6 +19,7 @@
 #define RED Vec3(1, 0, 0)
 #define BLUE Vec3(0, 0, 1)
 #define WHITE Vec3(1, 1, 1)
+#define GRAY Vec3(0.5, 0.5, 0.5)
 
 inline double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 
@@ -49,8 +50,10 @@ Vec3 lower_left_corner =
 
 // Spheres
 Sphere spheres[] = {
-    Sphere(Vec3(0, -100.5, -1), 100, BLUE, DIFFUSE),
-    Sphere(Vec3(0, 0, -1), 0.5, RED, DIFFUSE),
+    Sphere(Vec3(0, -200.5, -1), 200, GRAY, DIFFUSE),
+    Sphere(Vec3(0.9, -0.2, -0.8), 0.3, BLUE, DIFFUSE),
+    Sphere(Vec3(-0.9, -0.2, -0.8), 0.3, RED, DIFFUSE),
+    Sphere(Vec3(0, 0, -1), 0.5, WHITE, METAL),
 };
 // -----------------------------------------
 
@@ -75,15 +78,24 @@ Vec3 rayColor(const Ray &r, int depth) {
     // Ray hits an object
     // Hit point
     Vec3 p = r.at(t);
-    // Normal
-    Vec3 N = p - s.loc;
-    N = N.normalize();
+    // Outward normal
+    Vec3 out_N = p - s.loc;
+    out_N = out_N.normalize();
     // Front or back
-    bool isFront = r.dir.dot(N) > 0 ? false : true;
+    bool isFront = r.dir.dot(out_N) > 0 ? false : true;
+    // Normal
+    Vec3 N = isFront ? out_N : -out_N;
     if (s.mat == DIFFUSE) {
       // Diffuse material
       Vec3 target = p + N + getRandVecInSphere();
-      return 0.5 * rayColor(Ray(p, target - p), depth + 1);
+      return s.color * rayColor(Ray(p, target - p), depth + 1);
+    } else if (s.mat == METAL) {
+      // Metal material
+      Vec3 V = r.dir.normalize();
+      Vec3 reflected = V - 2 * V.dot(N) * N;
+      double fuzziness = s.rad < 1 ? s.rad : 1;
+      Vec3 fuzz = fuzziness * getRandVecInSphere();
+      return s.color * rayColor(Ray(p, reflected + fuzz), depth + 1);
     }
   }
 
@@ -105,7 +117,7 @@ int main() {
   for (int j = 0; j < h; j++) {
     // Loop through rows
     if (j * 20 % HEIGHT == 0)
-      std::cerr << "\rProgress: " << (int)100.0 * j / (h - 1) << "%\n"
+      std::cerr << "\rProgress: " << (int)100.0 * j / (h - 1) << "%...\n"
                 << std::flush;
     for (int i = 0; i < w; i++) {
       // Loop through columns

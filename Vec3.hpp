@@ -41,3 +41,5 @@ class Vec3 {
 };
 
 inline Vec3 operator*(double d, const Vec3 &v) { return v * d; }
+
+inline Vec3 operator-(const Vec3 &v) { return Vec3(-v.x, -v.y, -v.z); }
