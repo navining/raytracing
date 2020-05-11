@@ -13,7 +13,8 @@
 #define WIDTH 960
 #define HEIGHT 720
 #define FILENAME "result.ppm"
-#define SPP 10
+#define SPP 4
+#define MAX_DEPTH 5
 
 #define RED Vec3(1, 0, 0)
 #define BLUE Vec3(0, 0, 1)
@@ -25,6 +26,19 @@ inline double getRand(double min = 0.0, double max = 1.0) {
   return min + (max - min) * rand() / RAND_MAX;
 }
 
+inline Vec3 getRandVec(double min = 0.0, double max = 1.0) {
+  return Vec3(getRand(min, max), getRand(min, max), getRand(min, max));
+}
+
+Vec3 getRandVecInSphere() {
+  while (true) {
+    Vec3 v = getRandVec(-1.0, 1.0);
+    if (v.length() < 1.0) return v;
+  }
+}
+
+enum materials { DIFFUSE, METAL, DIELECTRICS };
+
 // --------------- Scene -------------------
 // Camera
 Vec3 origin(0.0, 0.0, 0.0);
@@ -35,12 +49,14 @@ Vec3 lower_left_corner =
 
 // Spheres
 Sphere spheres[] = {
-    Sphere(Vec3(0, -100.5, -1), 100, BLUE),
-    Sphere(Vec3(0, 0, -1), 0.5, RED),
+    Sphere(Vec3(0, -100.5, -1), 100, BLUE, DIFFUSE),
+    Sphere(Vec3(0, 0, -1), 0.5, RED, DIFFUSE),
 };
 // -----------------------------------------
 
-Vec3 rayColor(const Ray &r) {
+Vec3 rayColor(const Ray &r, int depth) {
+  if (depth >= MAX_DEPTH) return Vec3();
+
   bool isHit = false;
   double t = INFINITY;
   Sphere s;
@@ -57,12 +73,18 @@ Vec3 rayColor(const Ray &r) {
 
   if (isHit) {
     // Ray hits an object
+    // Hit point
+    Vec3 p = r.at(t);
     // Normal
-    Vec3 N = r.at(t) - s.loc;
+    Vec3 N = p - s.loc;
     N = N.normalize();
     // Front or back
     bool isFront = r.dir.dot(N) > 0 ? false : true;
-    return 0.5 * Vec3(N.x + 1, N.y + 1, N.z + 1);
+    if (s.mat == DIFFUSE) {
+      // Diffuse material
+      Vec3 target = p + N + getRandVecInSphere();
+      return 0.5 * rayColor(Ray(p, target - p), depth + 1);
+    }
   }
 
   Vec3 unit = r.dir.normalize();
@@ -76,6 +98,7 @@ int main() {
   Vec3 *image = new Vec3[w * h]();
 
   std::cout << "Target image: " << w << " × " << h << std::endl;
+  std::cout << "Samples per pixel: " << SPP << std::endl;
   std::cout << "Start rendering..." << std::endl;
 
 #pragma omp parallel for schedule(dynamic, 1)
@@ -92,9 +115,14 @@ int main() {
         double u = (i + getRand()) / (w - 1);
         double v = (j + getRand()) / (h - 1);
         Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
-        color += rayColor(r);
+        color += rayColor(r, 0);
       }
-      image[(h - j - 1) * w + i] = color / SPP;
+      // Gamma correction
+      color = color / SPP;
+      color.x = sqrt(color.x);
+      color.y = sqrt(color.y);
+      color.z = sqrt(color.z);
+      image[(h - j - 1) * w + i] = color;
     }
   }
   // Write ppm image
