@@ -20,6 +20,10 @@ class Vec3 {
 
   Vec3 operator/(double d) const { return Vec3(x / d, y / d, z / d); }
 
+  Vec3 operator+(double d) const { return Vec3(x + d, y + d, z + d); }
+
+  Vec3 operator-(double d) const { return Vec3(x - d, y - d, z - d); }
+
   void operator+=(const Vec3 &other) {
     x += other.x;
     y += other.y;
@@ -35,6 +39,10 @@ class Vec3 {
   Vec3 normalize() const {
     double l = length();
     return Vec3(x / l, y / l, z / l);
+  }
+
+  Vec3 cross(const Vec3 &v) {
+    return Vec3(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
   }
 
   double x, y, z;

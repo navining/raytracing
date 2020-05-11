@@ -7,53 +7,36 @@
 #include <cmath>
 #include <iostream>
 
+#include "Camera.hpp"
 #include "Ray.hpp"
 #include "Sphere.hpp"
 #include "Vec3.hpp"
+#include "utils.hpp"
 #define WIDTH 960
 #define HEIGHT 720
 #define FILENAME "result.ppm"
 #define SPP 4
-#define MAX_DEPTH 5
+#define MAX_DEPTH 50
 
 #define RED Vec3(1, 0, 0)
 #define BLUE Vec3(0, 0, 1)
 #define WHITE Vec3(1, 1, 1)
 #define GRAY Vec3(0.5, 0.5, 0.5)
 
-inline double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
-
-inline double getRand(double min = 0.0, double max = 1.0) {
-  return min + (max - min) * rand() / RAND_MAX;
-}
-
-inline Vec3 getRandVec(double min = 0.0, double max = 1.0) {
-  return Vec3(getRand(min, max), getRand(min, max), getRand(min, max));
-}
-
-Vec3 getRandVecInSphere() {
-  while (true) {
-    Vec3 v = getRandVec(-1.0, 1.0);
-    if (v.length() < 1.0) return v;
-  }
-}
-
 enum materials { DIFFUSE, METAL, DIELECTRICS };
 
 // --------------- Scene -------------------
 // Camera
-Vec3 origin(0.0, 0.0, 0.0);
-Vec3 horizontal(4.0, 0.0, 0.0);
-Vec3 vertical(0.0, 3.0, 0.0);
-Vec3 lower_left_corner =
-    origin - horizontal * 0.5 - vertical * 0.5 - Vec3(0, 0, 1);
-
+Vec3 eyept(-13, 3, 6);
+Vec3 lookat(0, 0, 0);
+Vec3 up(0, 1, 0);
+Camera cam(eyept, lookat, up, 20, 1.0 * WIDTH / HEIGHT);
 // Spheres
 Sphere spheres[] = {
-    Sphere(Vec3(0, -200.5, -1), 200, GRAY, DIFFUSE),
-    Sphere(Vec3(1, 0, -1), 0.5, Vec3(0.8, 0.6, 0.2), METAL),
-    Sphere(Vec3(-1, 0, -1), 0.5, WHITE, DIELECTRICS),
-    Sphere(Vec3(0, 0, -1), 0.5, RED, METAL),
+    Sphere(Vec3(0, -1000, 0), 1000, GRAY, DIFFUSE),
+    Sphere(Vec3(4, 1, 0), 1.0, Vec3(.7, .6, .5), METAL),
+    Sphere(Vec3(-4, 1, 0), 1.0, Vec3(.4, .2, .1), DIFFUSE),
+    Sphere(Vec3(0, 1, 0), 1.0, WHITE, DIELECTRICS),
 };
 // -----------------------------------------
 
@@ -95,8 +78,9 @@ Vec3 rayColor(const Ray &r, int depth) {
     REFLECT:
       Vec3 V = r.dir.normalize();
       Vec3 reflected = V - 2 * V.dot(N) * N;
-      // if (reflected.dot(N) <= 0) return Vec3(0, 0, 0);
-      double fuzziness = s.rad < 1 ? s.rad : 1;
+      if (reflected.dot(N) <= 0) return Vec3(0, 0, 0);
+      // double fuzziness = s.rad < 1 ? s.rad : 1;
+      double fuzziness = 0;
       Vec3 fuzz = fuzziness * getRandVecInSphere();
       return s.color * rayColor(Ray(p, reflected + fuzz), depth + 1);
     } else if (s.mat == DIELECTRICS) {
@@ -154,7 +138,7 @@ int main() {
         // Loops through multiple samples
         double u = (i + getRand()) / (w - 1);
         double v = (j + getRand()) / (h - 1);
-        Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
+        Ray r = cam.getRay(u, v);
         color += rayColor(r, 0);
       }
       // Gamma correction
