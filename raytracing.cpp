@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 #include "Camera.hpp"
 #include "Ray.hpp"
@@ -16,7 +17,7 @@
 #define HEIGHT 720
 #define FILENAME "result.ppm"
 #define SPP 4
-#define MAX_DEPTH 50
+#define MAX_DEPTH 20
 
 #define RED Vec3(1, 0, 0)
 #define BLUE Vec3(0, 0, 1)
@@ -27,17 +28,33 @@ enum materials { DIFFUSE, METAL, DIELECTRICS };
 
 // --------------- Scene -------------------
 // Camera
-Vec3 eyept(-13, 3, 6);
+Vec3 eyept(13, 3, 3);
 Vec3 lookat(0, 0, 0);
 Vec3 up(0, 1, 0);
 Camera cam(eyept, lookat, up, 20, 1.0 * WIDTH / HEIGHT);
 // Spheres
-Sphere spheres[] = {
+std::vector<Sphere> spheres = {
     Sphere(Vec3(0, -1000, 0), 1000, GRAY, DIFFUSE),
     Sphere(Vec3(4, 1, 0), 1.0, Vec3(.7, .6, .5), METAL),
     Sphere(Vec3(-4, 1, 0), 1.0, Vec3(.4, .2, .1), DIFFUSE),
     Sphere(Vec3(0, 1, 0), 1.0, WHITE, DIELECTRICS),
 };
+
+void setupScene(int num) {
+  for (int i = 0; i < num; i++) {
+    Vec3 location(getRand(-10, 10), 0.2, getRand(-5, 5));
+    Vec3 color(getRand(), getRand(), getRand());
+    double rand = getRand();
+    if (rand < 0.6) {
+      spheres.push_back(Sphere(location, 0.2, color, DIFFUSE));
+    } else if (rand < 0.8) {
+      spheres.push_back(Sphere(location, 0.2, color, METAL));
+    } else {
+      spheres.push_back(Sphere(location, 0.2, color, DIELECTRICS));
+    }
+  }
+}
+
 // -----------------------------------------
 
 Vec3 rayColor(const Ray &r, int depth) {
@@ -124,6 +141,8 @@ int main() {
   std::cout << "Target image: " << w << " × " << h << std::endl;
   std::cout << "Samples per pixel: " << SPP << std::endl;
   std::cout << "Start rendering..." << std::endl;
+
+  setupScene(90);
 
   //#pragma omp parallel for schedule(dynamic, 1)
   for (int j = 0; j < h; j++) {
