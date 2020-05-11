@@ -51,9 +51,9 @@ Vec3 lower_left_corner =
 // Spheres
 Sphere spheres[] = {
     Sphere(Vec3(0, -200.5, -1), 200, GRAY, DIFFUSE),
-    Sphere(Vec3(0.9, -0.2, -0.8), 0.3, BLUE, DIFFUSE),
-    Sphere(Vec3(-0.9, -0.2, -0.8), 0.3, RED, DIFFUSE),
-    Sphere(Vec3(0, 0, -1), 0.5, WHITE, METAL),
+    Sphere(Vec3(1, 0, -1), 0.5, Vec3(0.8, 0.6, 0.2), METAL),
+    Sphere(Vec3(-1, 0, -1), 0.5, WHITE, DIELECTRICS),
+    Sphere(Vec3(0, 0, -1), 0.5, RED, METAL),
 };
 // -----------------------------------------
 
@@ -85,17 +85,45 @@ Vec3 rayColor(const Ray &r, int depth) {
     bool isFront = r.dir.dot(out_N) > 0 ? false : true;
     // Normal
     Vec3 N = isFront ? out_N : -out_N;
+
     if (s.mat == DIFFUSE) {
-      // Diffuse material
+      // ------------------ Diffuse material ------------------
       Vec3 target = p + N + getRandVecInSphere();
       return s.color * rayColor(Ray(p, target - p), depth + 1);
     } else if (s.mat == METAL) {
-      // Metal material
+      // ------------------ Metal material ------------------
+    REFLECT:
       Vec3 V = r.dir.normalize();
       Vec3 reflected = V - 2 * V.dot(N) * N;
+      // if (reflected.dot(N) <= 0) return Vec3(0, 0, 0);
       double fuzziness = s.rad < 1 ? s.rad : 1;
       Vec3 fuzz = fuzziness * getRandVecInSphere();
       return s.color * rayColor(Ray(p, reflected + fuzz), depth + 1);
+    } else if (s.mat == DIELECTRICS) {
+      // ------------------ Dielectrics material ------------------
+      double factor = 1.52;
+      Vec3 V = r.dir.normalize();
+      double cos_theta = fmin((-V).dot(N), 1.0);
+      double eta = isFront ? 1.0 / factor : factor;
+      double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
+
+      if (eta * sin_theta <= 1.0) {
+        // Refract
+        // Schlick approximation
+        double r0 = (1 - eta) / (1 + eta);
+        r0 *= r0;
+        double reflect_prob = r0 + (1 - r0) * pow(1 - cos_theta, 5);
+        if (getRand() < reflect_prob) goto REFLECT;
+
+        Vec3 refracted_parallel = eta * (V + cos_theta * N);
+        Vec3 refracted_perp =
+            -sqrt(1.0 - pow(refracted_parallel.length(), 2)) * N;
+        Vec3 refracted = refracted_parallel + refracted_perp;
+        return rayColor(Ray(p, refracted), depth + 1);
+      } else {
+        // Reflect
+        goto REFLECT;
+      }
     }
   }
 
@@ -113,7 +141,7 @@ int main() {
   std::cout << "Samples per pixel: " << SPP << std::endl;
   std::cout << "Start rendering..." << std::endl;
 
-#pragma omp parallel for schedule(dynamic, 1)
+  //#pragma omp parallel for schedule(dynamic, 1)
   for (int j = 0; j < h; j++) {
     // Loop through rows
     if (j * 20 % HEIGHT == 0)
