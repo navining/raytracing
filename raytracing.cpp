@@ -31,7 +31,7 @@ enum materials { DIFFUSE, METAL, DIELECTRICS };
 Vec3 eyept(13, 3, 3);
 Vec3 lookat(0, 0, 0);
 Vec3 up(0, 1, 0);
-Camera cam(eyept, lookat, up, 20, 1.0 * WIDTH / HEIGHT);
+Camera cam(eyept, lookat, up, 20, 1.0 * WIDTH / HEIGHT, 0.1, 10.0);
 // Spheres
 std::vector<Sphere> spheres = {
     Sphere(Vec3(0, -1000, 0), 1000, GRAY, DIFFUSE),
