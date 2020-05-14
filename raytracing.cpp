@@ -19,12 +19,11 @@
 #define SPP 4
 #define MAX_DEPTH 20
 
-#define RED Vec3(1, 0, 0)
-#define BLUE Vec3(0, 0, 1)
 #define WHITE Vec3(1, 1, 1)
 #define GRAY Vec3(0.5, 0.5, 0.5)
+#define BLACK Vec3()
 
-enum materials { DIFFUSE, METAL, DIELECTRICS };
+enum materials { DIFFUSE, METAL, DIELECTRICS, LIGHT };
 
 // --------------- Scene -------------------
 // Camera
@@ -38,6 +37,7 @@ std::vector<Sphere> spheres = {
     Sphere(Vec3(4, 1, 0), 1.0, Vec3(.7, .6, .5), METAL),
     Sphere(Vec3(-4, 1, 0), 1.0, Vec3(.4, .2, .1), DIFFUSE),
     Sphere(Vec3(0, 1, 0), 1.0, WHITE, DIELECTRICS),
+    Sphere(Vec3(4, 0.3, 1.9), 0.3, WHITE, LIGHT),
 };
 
 void setupScene(int num) {
@@ -125,6 +125,10 @@ Vec3 rayColor(const Ray &r, int depth) {
         // Reflect
         goto REFLECT;
       }
+    } else if (s.mat == LIGHT) {
+      // ----------------- LIGHT ---------------------------
+      double luminance = 5.0;
+      return s.color * luminance;
     }
   }
 
@@ -177,7 +181,7 @@ int main() {
   }
 
   std::cout << "Finish!" << std::endl;
-  std::cout << "The image is saved as " << FILENAME << "." << std::endl;
+  std::cout << "The image is saved as " << FILENAME << std::endl;
   delete[] image;
   return 0;
 }
