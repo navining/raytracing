@@ -13,8 +13,8 @@
 #include "Sphere.hpp"
 #include "Vec3.hpp"
 #include "utils.hpp"
-#define WIDTH 320
-#define HEIGHT 180
+#define WIDTH 960
+#define HEIGHT 540
 #define FILENAME "result.ppm"
 #define SPP 5000
 #define MAX_DEPTH 20

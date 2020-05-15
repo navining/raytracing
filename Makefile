@@ -10,4 +10,4 @@ smallpt: raytracing.cpp
 	$(CPP) $(CPPFLAGS) -o raytracing raytracing.cpp 
 
 clean:
-	-rm raytracing result.* 
+	-rm raytracing
