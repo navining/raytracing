@@ -1,8 +1,17 @@
+/**
+ * @file Camera.hpp
+ * The Camera class
+ * @author Navi Ning <xning5@illinois.edu>
+ */
+
 #pragma once
 #include "Ray.hpp"
 #include "Vec3.hpp"
 #include "utils.hpp"
 
+/**
+ * Class Camera
+ */
 class Camera {
  public:
   Camera(Vec3 eyept, Vec3 lookat, Vec3 up, double vfov, double aspect_ratio,
@@ -22,6 +31,12 @@ class Camera {
     lower_left_corner = eyept - (half_w * u + half_h * v + w) * dist;
   }
 
+  /**
+   * Get a ray from pixel coordinates
+   * @param u pixel coordinate
+   * @param v pixel coordinate
+   * @return a ray through the pixel
+   */
   Ray getRay(double u, double v) {
     double offset = 0.0;
     if (radius > 1e5) {
@@ -34,9 +49,9 @@ class Camera {
   }
 
  private:
-  Vec3 origin;
-  Vec3 horizontal;
-  Vec3 vertical;
-  Vec3 lower_left_corner;
-  double radius;
+  Vec3 origin;             // Origin point
+  Vec3 horizontal;         // Horizontal plane
+  Vec3 vertical;           // Vertical plane
+  Vec3 lower_left_corner;  // Lower left corner
+  double radius;           // Aperture radius
 };

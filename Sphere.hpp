@@ -1,6 +1,16 @@
+/**
+ * @file Sphere.hpp
+ * The Sphere class
+ * @author Navi Ning <xning5@illinois.edu>
+ */
+
 #pragma once
 #include "Ray.hpp"
 #include "Vec3.hpp"
+
+/**
+ * Class Sphere
+ */
 class Sphere {
  public:
   Sphere() {}
@@ -9,6 +19,8 @@ class Sphere {
 
   /**
    * Return distance to the hit point, -1.0 if not hit
+   * @param r the ray
+   * @return distance to the hit point
    */
   double hit(const Ray& r) {
     Vec3 ol = r.orig - loc;

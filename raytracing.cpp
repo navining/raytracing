@@ -23,28 +23,34 @@
 #define GRAY Vec3(0.5, 0.5, 0.5)
 #define BLACK Vec3()
 
+// Material types
 enum materials { DIFFUSE, METAL, DIELECTRICS, LIGHT };
 
 // --------------- Scene -------------------
 // Camera
-Vec3 eyept(2, 1, 10);
-Vec3 lookat(2, 1, -1);
-Vec3 up(0, 1, 0);
+Vec3 eyept(2, 1, 10);   // Eye point
+Vec3 lookat(2, 1, -1);  // Lookat vector
+Vec3 up(0, 1, 0);       // Up vertor
 Camera cam(eyept, lookat, up, 20, 1.0 * WIDTH / HEIGHT, 0.1, 10.0);
+
 // Spheres
 std::vector<Sphere> spheres = {
-    Sphere(Vec3(0, -1e9, 0), 1e9, GRAY, DIFFUSE),        // Bottom
-    Sphere(Vec3(0, 1e9 + 20, 0), 1e9, BLACK, LIGHT),     // Top
-    Sphere(Vec3(-1e9 - 0.5, 0, 0), 1e9, GRAY, DIFFUSE),  // Left
-    Sphere(Vec3(1e9 + 40, 0, 0), 1e9, BLACK, LIGHT),     // Right
-    Sphere(Vec3(0, 0, -1e9 - 20), 1e9, BLACK, LIGHT),    // Front
-    Sphere(Vec3(0, 0, 1e9 + 20), 1e9, BLACK, LIGHT),     // Back
-    Sphere(Vec3(-30.99 + 0.5, 1.5, -1), 30, WHITE, LIGHT),
+    Sphere(Vec3(0, -1e9, 0), 1e9, GRAY, DIFFUSE),           // Bottom
+    Sphere(Vec3(0, 1e9 + 20, 0), 1e9, BLACK, LIGHT),        // Top
+    Sphere(Vec3(-1e9 - 0.5, 0, 0), 1e9, GRAY, DIFFUSE),     // Left
+    Sphere(Vec3(1e9 + 40, 0, 0), 1e9, BLACK, LIGHT),        // Right
+    Sphere(Vec3(0, 0, -1e9 - 20), 1e9, BLACK, LIGHT),       // Front
+    Sphere(Vec3(0, 0, 1e9 + 20), 1e9, BLACK, LIGHT),        // Back
+    Sphere(Vec3(-30.99 + 0.5, 1.5, -1), 30, WHITE, LIGHT),  // Light
     Sphere(Vec3(0.5, 0.3, 0), 0.3, Vec3(0.2, 0.4, 0), DIFFUSE),
-    Sphere(Vec3(1.7, 0.6, 0), 0.6, Vec3(0.5, 0.1, 0.7), DIELECTRICS),
+    Sphere(Vec3(1.7, 0.6, 0), 0.6, WHITE, DIELECTRICS),
     Sphere(Vec3(3.75, 1.2, 0), 1.2, Vec3(0.5, 0.5, 0.3), METAL),
 };
 
+/**
+ * Set up the scene with random spheres
+ * @param num number of spheres
+ */
 void setupScene(int num) {
   for (int i = 0; i < num; i++) {
     double z = getRand(-10, 10);
@@ -59,13 +65,18 @@ void setupScene(int num) {
     } else if (rand < 0.8) {
       spheres.push_back(Sphere(location, 0.1, color, METAL));
     } else {
-      spheres.push_back(Sphere(location, 0.1, color, DIELECTRICS));
+      spheres.push_back(Sphere(location, 0.1, WHITE, DIELECTRICS));
     }
   }
 }
-
 // -----------------------------------------
 
+/**
+ * Get the pixel color with a ray
+ * @param r the ray
+ * @param depth recurtion depth
+ * @return the color
+ */
 Vec3 rayColor(const Ray &r, int depth) {
   if (depth >= MAX_DEPTH) return Vec3();
 
@@ -140,19 +151,24 @@ Vec3 rayColor(const Ray &r, int depth) {
       return s.color * luminance;
     }
   }
-  return WHITE;
+
   Vec3 unit = r.dir.normalize();
   t = 0.5 * (unit.y) + 0.1;
   return t * Vec3(0, 0, 0.01);
 }
 
-int main() {
+/**
+ * Main function
+ */
+int main(int argc, char *argv[]) {
   const int w = WIDTH;
   const int h = HEIGHT;
+  int spp = argc == 2 ? atoi(argv[1]) : SPP;
+
   Vec3 *image = new Vec3[w * h]();
 
   std::cout << "Target image: " << w << " × " << h << std::endl;
-  std::cout << "Samples per pixel: " << SPP << std::endl;
+  std::cout << "Samples per pixel: " << spp << std::endl;
   std::cout << "Start rendering..." << std::endl;
 
   setupScene(40);
@@ -163,7 +179,7 @@ int main() {
     for (int i = 0; i < w; i++) {
       // Loop through columns
       Vec3 color;
-      for (int s = 0; s < SPP; s++) {
+      for (int s = 0; s < spp; s++) {
         // Loops through multiple samples
         double u = (i + getRand()) / (w - 1);
         double v = (j + getRand()) / (h - 1);
@@ -171,23 +187,25 @@ int main() {
         color += rayColor(r, 0);
       }
       // Gamma correction
-      color = color / SPP;
+      color = color / spp;
       color.x = sqrt(color.x);
       color.y = sqrt(color.y);
       color.z = sqrt(color.z);
       image[(h - j - 1) * w + i] = color;
     }
   }
-  // Write ppm image
+
+  // Write into ppm
   FILE *f = fopen(FILENAME, "w");
   fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
   for (int i = 0; i < w * h; i++) {
     fprintf(f, "%d %d %d ", (int)(255.999 * image[i].x),
             (int)(255.999 * image[i].y), (int)(255.999 * image[i].z));
   }
-
   std::cout << "\nFinish!" << std::endl;
   std::cout << "The image is saved as " << FILENAME << std::endl;
+
   delete[] image;
+
   return 0;
 }
