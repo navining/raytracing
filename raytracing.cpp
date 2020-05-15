@@ -13,8 +13,8 @@
 #include "Sphere.hpp"
 #include "Vec3.hpp"
 #include "utils.hpp"
-#define WIDTH 960
-#define HEIGHT 480
+#define WIDTH 320
+#define HEIGHT 180
 #define FILENAME "result.ppm"
 #define SPP 5000
 #define MAX_DEPTH 20
@@ -53,9 +53,9 @@ std::vector<Sphere> spheres = {
  */
 void setupScene(int num) {
   for (int i = 0; i < num; i++) {
-    double z = getRand(-10, 10);
+    double z = getRand(-7, 12);
     while (-1.3 < z && z < 1.3) {
-      z = getRand(-10, 10);
+      z = getRand(-7, 12);
     }
     Vec3 location(getRand(-0.3, 5), 0.1, z);
     Vec3 color(getRand(), getRand(), getRand());
