@@ -14,9 +14,9 @@
 #include "Vec3.hpp"
 #include "utils.hpp"
 #define WIDTH 960
-#define HEIGHT 720
+#define HEIGHT 480
 #define FILENAME "result.ppm"
-#define SPP 4
+#define SPP 5000
 #define MAX_DEPTH 20
 
 #define WHITE Vec3(1, 1, 1)
@@ -27,30 +27,39 @@ enum materials { DIFFUSE, METAL, DIELECTRICS, LIGHT };
 
 // --------------- Scene -------------------
 // Camera
-Vec3 eyept(13, 3, 3);
-Vec3 lookat(0, 0, 0);
+Vec3 eyept(2, 1, 10);
+Vec3 lookat(2, 1, -1);
 Vec3 up(0, 1, 0);
 Camera cam(eyept, lookat, up, 20, 1.0 * WIDTH / HEIGHT, 0.1, 10.0);
 // Spheres
 std::vector<Sphere> spheres = {
-    Sphere(Vec3(0, -1000, 0), 1000, GRAY, DIFFUSE),
-    Sphere(Vec3(4, 1, 0), 1.0, Vec3(.7, .6, .5), METAL),
-    Sphere(Vec3(-4, 1, 0), 1.0, Vec3(.4, .2, .1), DIFFUSE),
-    Sphere(Vec3(0, 1, 0), 1.0, WHITE, DIELECTRICS),
-    Sphere(Vec3(4, 0.3, 1.9), 0.3, WHITE, LIGHT),
+    Sphere(Vec3(0, -1e9, 0), 1e9, GRAY, DIFFUSE),        // Bottom
+    Sphere(Vec3(0, 1e9 + 20, 0), 1e9, BLACK, LIGHT),     // Top
+    Sphere(Vec3(-1e9 - 0.5, 0, 0), 1e9, GRAY, DIFFUSE),  // Left
+    Sphere(Vec3(1e9 + 40, 0, 0), 1e9, BLACK, LIGHT),     // Right
+    Sphere(Vec3(0, 0, -1e9 - 20), 1e9, BLACK, LIGHT),    // Front
+    Sphere(Vec3(0, 0, 1e9 + 20), 1e9, BLACK, LIGHT),     // Back
+    Sphere(Vec3(-30.99 + 0.5, 1.5, -1), 30, WHITE, LIGHT),
+    Sphere(Vec3(0.5, 0.3, 0), 0.3, Vec3(0.2, 0.4, 0), DIFFUSE),
+    Sphere(Vec3(1.7, 0.6, 0), 0.6, Vec3(0.5, 0.1, 0.7), DIELECTRICS),
+    Sphere(Vec3(3.75, 1.2, 0), 1.2, Vec3(0.5, 0.5, 0.3), METAL),
 };
 
 void setupScene(int num) {
   for (int i = 0; i < num; i++) {
-    Vec3 location(getRand(-10, 10), 0.2, getRand(-5, 5));
+    double z = getRand(-10, 10);
+    while (-1.3 < z && z < 1.3) {
+      z = getRand(-10, 10);
+    }
+    Vec3 location(getRand(-0.3, 5), 0.1, z);
     Vec3 color(getRand(), getRand(), getRand());
     double rand = getRand();
     if (rand < 0.6) {
-      spheres.push_back(Sphere(location, 0.2, color, DIFFUSE));
+      spheres.push_back(Sphere(location, 0.1, color, DIFFUSE));
     } else if (rand < 0.8) {
-      spheres.push_back(Sphere(location, 0.2, color, METAL));
+      spheres.push_back(Sphere(location, 0.1, color, METAL));
     } else {
-      spheres.push_back(Sphere(location, 0.2, color, DIELECTRICS));
+      spheres.push_back(Sphere(location, 0.1, color, DIELECTRICS));
     }
   }
 }
@@ -127,14 +136,14 @@ Vec3 rayColor(const Ray &r, int depth) {
       }
     } else if (s.mat == LIGHT) {
       // ----------------- LIGHT ---------------------------
-      double luminance = 5.0;
+      double luminance = 30.0;
       return s.color * luminance;
     }
   }
-
+  return WHITE;
   Vec3 unit = r.dir.normalize();
-  t = 0.5 * (unit.y + 1.0);
-  return (1.0 - t) * WHITE + t * Vec3(0.5, 0.7, 1.0);
+  t = 0.5 * (unit.y) + 0.1;
+  return t * Vec3(0, 0, 0.01);
 }
 
 int main() {
@@ -146,14 +155,11 @@ int main() {
   std::cout << "Samples per pixel: " << SPP << std::endl;
   std::cout << "Start rendering..." << std::endl;
 
-  setupScene(90);
+  setupScene(40);
 
-  //#pragma omp parallel for schedule(dynamic, 1)
   for (int j = 0; j < h; j++) {
     // Loop through rows
-    if (j * 20 % HEIGHT == 0)
-      std::cerr << "\rProgress: " << (int)100.0 * j / (h - 1) << "%...\n"
-                << std::flush;
+    fprintf(stderr, "\rProgress: %5.2f%%", 100. * j / (h - 1));
     for (int i = 0; i < w; i++) {
       // Loop through columns
       Vec3 color;
@@ -180,7 +186,7 @@ int main() {
             (int)(255.999 * image[i].y), (int)(255.999 * image[i].z));
   }
 
-  std::cout << "Finish!" << std::endl;
+  std::cout << "\nFinish!" << std::endl;
   std::cout << "The image is saved as " << FILENAME << std::endl;
   delete[] image;
   return 0;
